@@ -1,6 +1,6 @@
 #!/bin/bash
-WORKDIR="/home/jovyan/work"
+WORKDIR="/home/jovyan"
 mkdir -p "$WORKDIR"
 cd "$WORKDIR"
-wget -O - https://github.com/"$REPO_NAME"/archive/master.tar.gz | tar xz --strip=2 "$REPO_NAME-master/notebooks"
+wget -O - https://github.com/"$REPO_USER/$REPO_NAME"/archive/master.tar.gz | tar xz --strip=2 "$REPO_NAME-master/notebooks"
 chown -R 1000 "$WORKDIR"

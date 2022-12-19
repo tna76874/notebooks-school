@@ -3,7 +3,8 @@ FROM jupyter/scipy-notebook:python-3.8.13
 USER root
 
 ENV SETUP_STATUS="production"
-ENV REPO_NAME="tna76874/notebooks-school"
+ENV REPO_USER="tna76874"
+ENV REPO_NAME="notebooks-school"
 
 COPY ./scripts/docker-entrypoint.sh /
 COPY ./scripts/update_notebooks /usr/local/bin/
