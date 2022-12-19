@@ -45,16 +45,58 @@ class customturtle(ipyturtle.Turtle):
         self.goto(x,y)        
 
 
-def newturtle(width=400,height=250):
-    # Hier legen wir fest wie der Hintergrund aussieht
-    myCanvas=ipyturtle.Canvas(width=width,height=height)
-    display(myCanvas)
-    myTS=ipyturtle.TurtleScreen(myCanvas)
-    myTS.clear()
-    myTS.bgcolor("lightgreen")
+class newturtle(customturtle):
+    def __init__(self,*args,**kwargs):
+        self.config =   {
+                        'width'  : 400,
+                        'height' : 250,
+                        'canvas' : None,
+                        'screen' : None,
+                        }
+        self.config.update(kwargs)
+        
+        if isinstance(self.config['canvas'],type(None)) & isinstance(self.config['screen'],type(None)):
+            self.canvas = ipyturtle.Canvas(width=self.config['width'],height=self.config['height'])       
+            display(self.canvas)
+            self.screen=ipyturtle.TurtleScreen(self.canvas)
+            self.screen.clear()
+            self.screen.bgcolor("lightgreen")
+            self.screen.delay(200)
+        else:
+            self.screen=self.config['screen']
+       
+        super().__init__(self.screen)
 
-    # Schildi die Schildkröte wird erschaffen
-    turtle=customturtle(myTS)
+    def introimage(self):   
+        """
+        letting turtle run introimage of skript
+        from:
+        https://github.com/williamnavaraj/ipyturtle3.git
+        """
+        colors = ['red', 'purple', 'blue', 'green', 'orange', 'yellow']
+        self.shape("turtle")
+        self.speed(1000)
+        self.screen.bgcolor('white')
+        self.screen.delay(1)
+        for x in range(100):
+            with(hold_canvas(self.canvas)):
+                self.pencolor(colors[x%6])
+                self.width(x//100 + 1)
+                self.forward(x)
+                self.left(59)
 
-    myTS.delay(200)
-    return turtle
+if __name__ == "__main__":
+    turtle = newturtle()
+    turtle.shape("turtle")
+    turtle.speed(100)
+    turtle.penup()
+    turtle.goto(-100,-50)
+    turtle.setheading(0)
+    turtle.pendown()
+    turtle.forward(200)
+    turtle.left(90)
+    turtle.forward(100)
+
+    turtle2 = newturtle(screen=turtle.screen)
+    turtle2.shape("turtle")
+    turtle2.color('red')
