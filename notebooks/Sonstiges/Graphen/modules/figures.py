@@ -4,6 +4,7 @@
 @author: lmh
 """
 import matplotlib.pyplot as plt
+from matplotlib.transforms import offset_copy
 import numpy as np
 from sympy.utilities.lambdify import lambdify, implemented_function, lambdastr
 import sympy as sp
@@ -14,7 +15,7 @@ class plotfig(object):
         self.fig = None
         self.ax = None
         self.in2cm = 1/2.54
-        self.set_plt_settings(8)
+        self.set_plt_settings(10)
         self.initfig(**kwargs)
 
         self.x = sp.symbols('x', real=True)
@@ -37,9 +38,6 @@ class plotfig(object):
         self.fig.subplots_adjust(wspace = wspace,hspace = hspace)
         try: self.ax = list(self.ax.flatten())
         except: self.ax = [self.ax]
-        for ax in self.ax:
-            ax.xaxis.set_units(self.in2cm)
-            ax.yaxis.set_units(self.in2cm)
 
     def symplot(self, *args, **kwargs,):
         confs = {
@@ -182,9 +180,18 @@ class plotfig(object):
             ax.yaxis.get_major_ticks()[yticks.index(ymax)].label1.set_visible(False)
 
         # Annotate x and y
-        delta = np.max([np.abs(ymin-ymax)*0.1,np.abs(xmin-xmax)*0.1])
-        ax.annotate('$x$', xy=(1,0), xytext=(xmax, -delta), transform=ax.transAxes, ha='center', va='center',fontsize=12)
-        ax.annotate('$y$', xy=(0,1), xytext=(-delta, ymax), transform=ax.transAxes, ha='center', va='center',fontsize=12)
+        frac = 0.07
+        dx = np.min([np.abs(xmin-xmax)*frac,np.abs(ymin-ymax)*frac])
+        dy = float(dx)*float(self.get_aspect(ax))
+               
+        ax.annotate('$x$', xy=(1,0), xytext=(xmax, -dy), transform=ax.transAxes, ha='center', va='center',fontsize=12)
+        ax.annotate('$y$', xy=(0,1), xytext=(-dx, ymax), transform=ax.transAxes, ha='center', va='center',fontsize=12)
+   
+    def get_aspect(self,ax=None):
+        aspect = ax.get_aspect()
+        if isinstance(aspect,str):
+            aspect=1
+        return aspect
 
     def ceil_lims(self,ax):
         xmin, xmax = ax.get_xlim() 
@@ -221,4 +228,10 @@ class plotfig(object):
                         }
         cvars.update(kwargs)
         
-        self.fig.savefig(savename+'.'+cvars['format'], **cvars)
+        size = np.array(self.fig.get_tightbbox().size)*2.54
+        print("Breite: {:.2f}cm".format(size[0]))
+        print("Höhe: {:.2f}cm".format(size[1]))
+        
+        for exp_format in ['pdf','svg','jpg']:
+            cvars['format'] = exp_format
+            self.fig.savefig(savename+'.'+exp_format, **cvars)
