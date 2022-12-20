@@ -8,23 +8,38 @@ import numpy as np
 from sympy.utilities.lambdify import lambdify, implemented_function, lambdastr
 import sympy as sp
 sf = sp.sympify
-plt.rcParams['text.usetex'] = True
 
 class plotfig(object):
     def __init__(self,**kwargs):
         self.fig = None
         self.ax = None
+        self.in2cm = 1/2.54
+        self.set_plt_settings(8)
         self.initfig(**kwargs)
 
         self.x = sp.symbols('x', real=True)
 
         self.X = np.linspace(-10,10,1000)
-        
-    def initfig(self,h=1,v=1,size=1.5,sharex=True,sharey=True,wspace = 0.2,hspace = 0.2,figsize=[6,2]):
-        self.fig, self.ax = plt.subplots(v,h,sharey=sharey,sharex=sharex,figsize=tuple(np.array(figsize)*size))
+
+    def set_plt_settings(self,fontsize: int=8):
+        # adjust matplotlib settings
+        plt.rcParams['text.usetex'] = True
+        plt.rc('font', size=fontsize) #controls default text size
+        plt.rc('axes', titlesize=fontsize) #fontsize of the title
+        plt.rc('axes', labelsize=fontsize) #fontsize of the x and y labels
+        plt.rc('xtick', labelsize=fontsize) #fontsize of the x tick labels
+        plt.rc('ytick', labelsize=fontsize) #fontsize of the y tick labels
+        plt.rc('legend', fontsize=fontsize) #fontsize of the legend
+
+    def initfig(self,h=1,v=1,scale=1,sharex=True,sharey=True,wspace = 0.2,hspace = 0.2,figsize=[6,4]):
+        # converting figure size to cm
+        self.fig, self.ax = plt.subplots(v,h,sharey=sharey,sharex=sharex,figsize=tuple(np.array(figsize)*self.in2cm*scale))
         self.fig.subplots_adjust(wspace = wspace,hspace = hspace)
         try: self.ax = list(self.ax.flatten())
         except: self.ax = [self.ax]
+        for ax in self.ax:
+            ax.xaxis.set_units(self.in2cm)
+            ax.yaxis.set_units(self.in2cm)
 
     def symplot(self, *args, **kwargs,):
         confs = {
@@ -86,7 +101,7 @@ class plotfig(object):
         
     def grid(self,grain: list = [1,0.1,1,0.1], idx='all',ax=None,):
         """
-        grain: [X-Major, Y-Major, X-Minor, Y-Minor]
+        grain: [X-Major, X-Minor, Y-Major, Y-Minor]
         """
         axes = self.get_ax(ax=ax,idx=idx)
         for ax in axes:
@@ -110,18 +125,18 @@ class plotfig(object):
         
         return axes
 
-    def arrowed_spines(self,ax=None,idx='all',equal=False, delta=0.2, lims: list = [None, None, None, None], ceil_lims = True):
+    def arrowed_spines(self,ax=None,idx='all',equal=False, lims: list = [None, None, None, None], ceil_lims = True):
         axes = self.get_ax(ax=ax,idx=idx)
         for ax in axes:
             self.set_lims(ax,lims=lims)
             if ceil_lims:
                 _, _, _, _ = self.ceil_lims(ax)
-            self.arrowed_spines_for_ax(ax,delta=delta)
+            self.arrowed_spines_for_ax(ax)
         
         if equal: _ = [ ax.set_aspect('equal') for ax in axes ]
             
             
-    def arrowed_spines_for_ax(self, ax,delta=0.2):
+    def arrowed_spines_for_ax(self, ax):
         # https://matplotlib.org/stable/gallery/spines/centered_spines_with_arrows.html
         # Move the left and bottom spines to x = 0 and y = 0, respectively.
         ax.spines[["left", "bottom"]].set_position(("data", 0))
@@ -165,8 +180,9 @@ class plotfig(object):
 
         if ymax in yticks:
             ax.yaxis.get_major_ticks()[yticks.index(ymax)].label1.set_visible(False)
-        
-        # Annotate x and y        
+
+        # Annotate x and y
+        delta = np.max([np.abs(ymin-ymax)*0.1,np.abs(xmin-xmax)*0.1])
         ax.annotate('$x$', xy=(1,0), xytext=(xmax, -delta), transform=ax.transAxes, ha='center', va='center',fontsize=12)
         ax.annotate('$y$', xy=(0,1), xytext=(-delta, ymax), transform=ax.transAxes, ha='center', va='center',fontsize=12)
 
@@ -200,9 +216,9 @@ class plotfig(object):
         cvars =         {
                         'bbox_inches'   : 'tight',
                         'pad_inches'    : 0,
-                        'dpi'           : 400,
+                        'dpi'           : 500,
                         'format'      : 'pdf',
                         }
-        cvars.update(kwargs)
+        cvars.update(kwargs)b
         
         self.fig.savefig(savename+'.'+cvars['format'], **cvars)
