@@ -15,14 +15,14 @@ class plotfig(object):
         self.fig = None
         self.ax = None
         self.in2cm = 1/2.54
-        self.set_plt_settings(10)
+        self.set_fontsize(9)
         self.initfig(**kwargs)
 
         self.x = sp.symbols('x', real=True)
 
         self.X = np.linspace(-10,10,1000)
 
-    def set_plt_settings(self,fontsize: int=8):
+    def set_fontsize(self,fontsize: int=8):
         # adjust matplotlib settings
         plt.rcParams['text.usetex'] = True
         plt.rc('font', size=fontsize) #controls default text size
