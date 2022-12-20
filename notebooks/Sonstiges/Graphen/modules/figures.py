@@ -219,6 +219,6 @@ class plotfig(object):
                         'dpi'           : 500,
                         'format'      : 'pdf',
                         }
-        cvars.update(kwargs)b
+        cvars.update(kwargs)
         
         self.fig.savefig(savename+'.'+cvars['format'], **cvars)
