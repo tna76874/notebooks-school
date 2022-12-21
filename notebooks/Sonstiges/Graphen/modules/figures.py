@@ -138,6 +138,7 @@ class plotfig(object):
         # https://matplotlib.org/stable/gallery/spines/centered_spines_with_arrows.html
         # Move the left and bottom spines to x = 0 and y = 0, respectively.
         ax.spines[["left", "bottom"]].set_position(("data", 0))
+        ax.spines[["left", "bottom"]].set_color('k')
         # Hide the top and right spines.
         ax.spines[["top", "right"]].set_visible(False)
 
@@ -158,7 +159,7 @@ class plotfig(object):
         yticks = [float(k.get_position()[1]) for k in ax.yaxis.get_majorticklabels()]
         
         # hide ticks
-        ax.tick_params(left=False, bottom=False)
+        #ax.tick_params(left=False, bottom=False)
 
         ## hide x 0 conditional
         if 0 in xticks:
@@ -222,9 +223,9 @@ class plotfig(object):
     def save(self,savename: str='plot', **kwargs):
         cvars =         {
                         'bbox_inches'   : 'tight',
-                        'pad_inches'    : 0,
+                        'pad_inches'    : 0.05/2.54,
                         'dpi'           : 500,
-                        'format'      : 'pdf',
+                        'format'        : 'pdf',
                         }
         cvars.update(kwargs)
         
