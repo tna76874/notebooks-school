@@ -55,6 +55,7 @@ class plotfig(object):
                     #'linewidth' : 1,
                     #'markersize': 5,
                     #'clip_on'   : True,
+                    'zorder'     : 1500,
                     }
         plotstyle.update(confs['style'])
         
@@ -150,6 +151,9 @@ class plotfig(object):
         ax.plot(1.01, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
         ax.plot(0, 1.01, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
 
+        # show ticks
+        ax.tick_params(direction='inout', length=4, width=0.5, color='k', zorder=10000,)
+
         # Ensure axis labels even if axis are shared
         ax.xaxis.set_tick_params(labelbottom=True)
         ax.yaxis.set_tick_params(labelleft=True)
@@ -158,8 +162,7 @@ class plotfig(object):
         xticks = [float(k.get_position()[0]) for k in ax.xaxis.get_majorticklabels()]
         yticks = [float(k.get_position()[1]) for k in ax.yaxis.get_majorticklabels()]
         
-        # hide ticks
-        #ax.tick_params(left=False, bottom=False)
+
 
         ## hide x 0 conditional
         if 0 in xticks:
