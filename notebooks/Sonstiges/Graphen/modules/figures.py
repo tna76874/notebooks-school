@@ -147,8 +147,8 @@ class plotfig(object):
         # respectively) and the other one (1) is an axes coordinate (i.e., at the very
         # right/top of the axes).  Also, disable clipping (clip_on=False) as the marker
         # actually spills out of the axes.
-        ax.plot(1, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
-        ax.plot(0, 1, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
+        ax.plot(1.01, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
+        ax.plot(0, 1.01, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
 
         # Ensure axis labels even if axis are shared
         ax.xaxis.set_tick_params(labelbottom=True)
