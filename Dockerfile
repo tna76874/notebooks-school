@@ -11,7 +11,7 @@ RUN apt-get update -q && apt-get install -y \
     ghostscript \
     software-properties-common \
     python3-tk
-RUN add-apt-repository universe && apt-get update -q && apt-get install -y \
+RUN add-apt-repository universe --yes --update && apt-get install -y \
     shc \
     gcc &\
     rm -rf /var/lib/apt/lists/*
