@@ -1,6 +1,25 @@
 #!/bin/bash
-WORKDIR="/home/jovyan"
+if [ "$SETUP_STATUS" = "production" ]; then
+    WORKDIR="/home/jovyan"
+else
+    WORKDIR="/home/jovyan/work"
+fi
+
 mkdir -p "$WORKDIR"
-cd "$WORKDIR"
-wget -O - https://github.com/"$REPO_USER/$REPO_NAME"/archive/master.tar.gz | tar xz --strip=2 "$REPO_NAME-master/notebooks"
-chown -R 1000 "$WORKDIR"
+
+get_latest_files() {
+    cd "$WORKDIR"
+    wget -O - https://github.com/"$REPO_USER/$REPO_NAME"/archive/master.tar.gz | tar xz --strip=2 "$REPO_NAME-master/notebooks"
+    chown -R 1000 "$WORKDIR"
+}
+
+install_modules() {
+    cd "$WORKDIR"/modules
+    pip install .
+}
+
+if [ "$SETUP_STATUS" = "production" ]; then
+    get_latest_files || :
+fi
+
+install_modules || :

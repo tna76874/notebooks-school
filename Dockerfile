@@ -6,15 +6,22 @@ ENV SETUP_STATUS="production"
 ENV REPO_USER="tna76874"
 ENV REPO_NAME="notebooks-school"
 
-COPY ./scripts/docker-entrypoint.sh /
-COPY ./scripts/update_notebooks /usr/local/bin/
-RUN chmod 775 /usr/local/bin/update_notebooks
-
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -q && apt-get install -y \
     ghostscript \
-    python3-tk &&\
+    software-properties-common \
+    python3-tk
+RUN add-apt-repository universe && apt-get update -q && apt-get install -y \
+    shc \
+    gcc &\
     rm -rf /var/lib/apt/lists/*
+
+COPY ./scripts/docker-entrypoint.sh /
+COPY ./scripts/run_on_init /usr/local/bin/
+COPY ./scripts/update_notebooks /usr/local/bin/
+RUN chmod 775 /usr/local/bin/run_on_init
+RUN chmod 775 /usr/local/bin/update_notebooks
+
 
 ARG NB_USER=jovyan
 ARG NB_UID=1000
