@@ -32,7 +32,7 @@ class soziogramm(object):
         self.template = ""
         self.set_template()
         
-        self.rendervars = {'cons':'', 'cliques':''}
+        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', }
 
     def read_names(self):
         self.names = pd.read_csv('namen.csv', header=None)
@@ -60,10 +60,8 @@ class soziogramm(object):
         cliques_len = str(len(self.clique))
         
         self.rendervars['cliquen'] =  "\\item " + "\n\\item ".join(cliques)
-        print("{:} Cliquen:\n".format(cliques_len) + self.rendervars['cliquen'])
         
-        if len(not_in_clique)>0: print("\n\nNicht in Cliquen:\n"+", ".join(not_in_clique))
-        
+        self.rendervars['nocliq'] = ", ".join(not_in_clique)     
         
     def make_soziogramm(self, save=False, format='pdf', directed=False):
         self.read_names()
@@ -129,14 +127,13 @@ class soziogramm(object):
 
         if save: self.save(format=format)
 
-        if directed:
-            cons_out = { k:len(self.G.out_edges(k)) for k in personen }
-            cons_in = { k:len(self.G.in_edges(k)) for k in personen }
-            cons_out = pd.DataFrame({'name':cons_out.keys(), 'in':cons_out.values()})
-            cons_in = pd.DataFrame({'name':cons_in.keys(), 'out':cons_in.values()})
-            cons = pd.merge(cons_in,cons_out,on='name')
-            cons['in-out'] = cons['in']-cons['out']
-            self.cons = cons.sort_values(['in'],ascending=[False]).reset_index(drop=True)
+        if not directed:
+            betCent = nx.betweenness_centrality(self.G, normalized=True, endpoints=True)
+            cons  = pd.DataFrame.from_dict({'name': list(betCent.keys()), 'vernetzung': list(betCent.values())})
+            cons = cons.sort_values(['vernetzung'],ascending=False).reset_index(drop=True)
+            cons['vernetzung'] = cons['vernetzung'].apply(lambda x: "{:.0f}%".format(x*100))
+            cons.rename(columns={'vernetzung':'Vernetzung', 'name':'Name'}, inplace=True)
+            self.cons = cons
             self.rendervars['cons'] = self.cons.to_latex(index=False)
 
     def run_latex(self,input_filename, output_filename,runinfo=None,latex="/usr/bin/pdflatex",ending='tex'):
@@ -199,6 +196,15 @@ class soziogramm(object):
 \usepackage{float}
 \usepackage{booktabs}
 \usepackage[landscape]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{hyperxmp}
+\hypersetup{pdfauthor={Lukas Meyer-Hilberg}, 
+	pdftitle={Soziogramm Report}, 
+	pdfsubject={Soziogramm Report}, 
+	pdfcreator={LaTeX}, 
+	pdfproducer={LaTeX}, 
+	pdfkeywords={Stand \today}, 
+	pdfcopyright={Lukas Meyer-Hilberg}}
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancypagestyle{pdfreport}{%
@@ -232,11 +238,18 @@ bottom=20mm,
 \vspace{0pt}
 Cliquen:
 \begin{itemize}
+\setlength\itemsep{1pt}
 {% endraw %}{{ cliquen }}{% raw %}
 \end{itemize}
+{% endraw %}
+{% if nocliq!='' %}
+Nicht in Cliquen: {{nocliq}}
+{% endif %}
+{% raw %}
 \end{minipage}
 \begin{minipage}[t]{0.5\textwidth}
 \vspace{0pt}
+\href{https://en.wikipedia.org/wiki/Betweenness_centrality}{Vernetzung: Betweenness centrality}\par
 {% endraw %}{{ cons }}{% raw %}
 \end{minipage}
 
