@@ -5,6 +5,7 @@
 """
 import matplotlib.pyplot as plt
 import networkx as nx
+import networkx.algorithms.community as nxcom
 import pandas as pd
 import os
 from itertools import combinations,chain
@@ -32,7 +33,7 @@ class soziogramm(object):
         self.template = ""
         self.set_template()
         
-        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', }
+        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', 'comms':''}
 
     def read_names(self):
         self.names = pd.read_csv('namen.csv', header=None)
@@ -61,7 +62,10 @@ class soziogramm(object):
         
         self.rendervars['cliquen'] =  "\\item " + "\n\\item ".join(cliques)
         
-        self.rendervars['nocliq'] = ", ".join(not_in_clique)     
+        self.rendervars['nocliq'] = ", ".join(not_in_clique)
+
+        communities = sorted(nxcom.greedy_modularity_communities(self.G), key=len, reverse=True)
+        self.rendervars['comms'] = "\\item " + "\n\\item ".join([", ".join(k) for k in communities])
         
     def make_soziogramm(self, save=False, format='pdf', directed=False):
         self.read_names()
@@ -235,10 +239,11 @@ bottom=20mm,
 \begin{document}
 
 \begin{minipage}[t]{0.5\textwidth}
-\vspace{0pt}
+\vspace{-0.2cm}
 Cliquen:
+\vspace{-0.2cm}
 \begin{itemize}
-\setlength\itemsep{1pt}
+\setlength\itemsep{0pt}
 {% endraw %}{{ cliquen }}{% raw %}
 \end{itemize}
 {% endraw %}
@@ -246,6 +251,12 @@ Cliquen:
 Nicht in Cliquen: {{nocliq}}
 {% endif %}
 {% raw %}
+\href{https://networkx.org/documentation/stable/reference/algorithms/community.html#module-networkx.algorithms.community}{Communities}
+\vspace{-0.2cm}
+\begin{itemize}
+\setlength\itemsep{0pt}
+{% endraw %}{{ comms }}{% raw %}
+\end{itemize}
 \end{minipage}
 \begin{minipage}[t]{0.5\textwidth}
 \vspace{0pt}
