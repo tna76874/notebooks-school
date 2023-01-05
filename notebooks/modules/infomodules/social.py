@@ -29,6 +29,7 @@ class soziogramm(object):
         self.fig = None
         self.cons = None
         self.clique = None
+        self.communities = None
         
         self.template = ""
         self.set_template()
@@ -48,7 +49,11 @@ class soziogramm(object):
         template_out = template.render(**self.rendervars)
 
         with open(renderfile, "w",encoding="utf8") as myfile:
-            myfile.write(template_out) 
+            myfile.write(template_out)
+    
+    def get_communities(self):
+        self.communities = sorted(nxcom.greedy_modularity_communities(self.G), key=len, reverse=True)
+        self.rendervars['comms'] = "\\item " + "\n\\item ".join([", ".join(k) for k in self.communities])
         
     def get_clique(self):
         self.clique = [ list(k) for k in nx.find_cliques(self.G) if len(k)>2 ]
@@ -63,9 +68,6 @@ class soziogramm(object):
         self.rendervars['cliquen'] =  "\\item " + "\n\\item ".join(cliques)
         
         self.rendervars['nocliq'] = ", ".join(not_in_clique)
-
-        communities = sorted(nxcom.greedy_modularity_communities(self.G), key=len, reverse=True)
-        self.rendervars['comms'] = "\\item " + "\n\\item ".join([", ".join(k) for k in communities])
         
     def make_soziogramm(self, save=False, format='pdf', directed=False):
         self.read_names()
@@ -108,37 +110,109 @@ class soziogramm(object):
                 edgelist += [tuple(k)]
                 self.G.add_edge(k[0], k[1], weight=edgeweight)
             
-        pos = nx.spring_layout(self.G)
+        
 
         self.fig, ax = plt.subplots(1,1,figsize=(11.69*2,8.27*2))
-        nx.draw_networkx(self.G, pos,
-                         with_labels=True,
-                         ax=ax,
-                         font_color='red',
-                         node_size=1000,
-                         node_color="white",
-                         node_shape="s",
-                         alpha=1,
-                         width=1,
-                         edgelist=edgelist,
-                         style=edge_style,
-                         edge_color=edge_color,
-                        )
-        
-        
-        ax.set_aspect('equal')
-        plt.box(False)
+
+        if not directed:
+            betCent = nx.betweenness_centrality(self.G, normalized=True, endpoints=False)
+            cons  = pd.DataFrame.from_dict({'name': list(betCent.keys()), 'vernetzung': list(betCent.values())})
+            cons = cons.sort_values(['vernetzung'],ascending=False).reset_index(drop=True)
+            cons['vernetzung'] = cons['vernetzung'].apply(lambda x: "{:.1f}%".format(x*100))
+            cons.rename(columns={'vernetzung':'Zentralität', 'name':'Name'}, inplace=True)
+            self.cons = cons
+            self.rendervars['cons'] = self.cons.to_latex(index=False)
+
+            self.get_communities()
+            self.set_node_community(self.G, self.communities)
+            self.set_edge_community(self.G)
+            node_color = [self.get_color(self.G.nodes[v]['community']) for v in self.G.nodes]
+            external = [(v, w) for v, w in self.G.edges if self.G.edges[v, w]['community'] == 0]
+            internal = [(v, w) for v, w in self.G.edges if self.G.edges[v, w]['community'] > 0]
+            internal_color = ['black' for e in internal]
+
+            pos = nx.spring_layout(self.G)
+            plt.box(False)
+
+            nx.draw_networkx(
+                    self.G,
+                    ax=ax,
+                    pos=pos,
+                    alpha=1,
+                    width=1,
+                    node_size=0,
+                    edgelist=external,
+                    edge_color="silver",
+                    )
+            nx.draw_networkx(
+                self.G,
+                ax=ax,
+                pos=pos,
+                alpha=1,
+                width=1,
+                node_color=node_color,
+                edgelist=internal,
+                edge_color=internal_color,
+                )
+
+        else:
+            pos = nx.spring_layout(self.G)
+            nx.draw_networkx(self.G, pos,
+                            with_labels=True,
+                            ax=ax,
+                            font_color='red',
+                            node_size=1000,
+                            node_color="white",
+                            node_shape="s",
+                            alpha=1,
+                            width=1,
+                            edgelist=edgelist,
+                            style=edge_style,
+                            edge_color=edge_color,
+                            )
+            
+            
+            ax.set_aspect('equal')
+            plt.box(False)
 
         if save: self.save(format=format)
 
-        if not directed:
-            betCent = nx.betweenness_centrality(self.G, normalized=True, endpoints=True)
-            cons  = pd.DataFrame.from_dict({'name': list(betCent.keys()), 'vernetzung': list(betCent.values())})
-            cons = cons.sort_values(['vernetzung'],ascending=False).reset_index(drop=True)
-            cons['vernetzung'] = cons['vernetzung'].apply(lambda x: "{:.0f}%".format(x*100))
-            cons.rename(columns={'vernetzung':'Vernetzung', 'name':'Name'}, inplace=True)
-            self.cons = cons
-            self.rendervars['cons'] = self.cons.to_latex(index=False)
+    def set_node_community(self, G, communities):
+        '''
+        Add community to node attributes
+        https://graphsandnetworks.com/community-detection-using-networkx/
+        '''
+        for c, v_c in enumerate(communities):
+            for v in v_c:
+                # Add 1 to save 0 for external edges
+                G.nodes[v]['community'] = c + 1
+
+    def set_edge_community(self, G):
+        '''
+        Find internal edges and add their community to their attributes.
+        https://graphsandnetworks.com/community-detection-using-networkx/
+        '''
+        for v, w, in G.edges:
+            if G.nodes[v]['community'] == G.nodes[w]['community']:
+                # Internal edge, mark with community
+                G.edges[v, w]['community'] = G.nodes[v]['community']
+            else:
+                # External edge, mark as 0
+                G.edges[v, w]['community'] = 0
+
+    def get_color(self, i, r_off=1, g_off=1, b_off=1):
+        '''
+        Assign a color to a vertex.
+        https://graphsandnetworks.com/community-detection-using-networkx/
+        '''
+        r0, g0, b0 = 0, 0, 0
+        n = 16
+        low, high = 0.1, 0.9
+        span = high - low
+        r = low + span * (((i + r_off) * 3) % n) / (n - 1)
+        g = low + span * (((i + g_off) * 5) % n) / (n - 1)
+        b = low + span * (((i + b_off) * 7) % n) / (n - 1)
+        return (r, g, b)
 
     def run_latex(self,input_filename, output_filename,runinfo=None,latex="/usr/bin/pdflatex",ending='tex'):
         input_filename = os.path.abspath(input_filename+'.'+ending)
@@ -178,6 +252,7 @@ class soziogramm(object):
         self.ensure_dir(self.tmpdir)
         self.make_soziogramm()
         self.get_clique()
+        self.get_communities()
         self.save(name='soziogramm1')
         self.make_soziogramm(directed=True)
         self.save(name='soziogramm2')
@@ -197,6 +272,7 @@ class soziogramm(object):
 \usepackage[ddmmyyyy]{datetime}
 \renewcommand{\dateseparator}{.}
 \usepackage{graphicx}
+\usepackage{xcolor}
 \usepackage{float}
 \usepackage{booktabs}
 \usepackage[landscape]{geometry}
@@ -211,6 +287,7 @@ class soziogramm(object):
 	pdfcopyright={Lukas Meyer-Hilberg}}
 \usepackage{fancyhdr}
 \pagestyle{fancy}
+\usepackage{courier}
 \fancypagestyle{pdfreport}{%
 \fancyheadoffset{0.25cm} 
 \fancyhf{}
@@ -240,18 +317,20 @@ bottom=20mm,
 
 \begin{minipage}[t]{0.5\textwidth}
 \vspace{-0.2cm}
-Cliquen:
+\href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.clique.find_cliques.html#networkx.algorithms.clique.find_cliques}{\textbf{Cliquen:}}
 \vspace{-0.2cm}
 \begin{itemize}
 \setlength\itemsep{0pt}
 {% endraw %}{{ cliquen }}{% raw %}
 \end{itemize}
+{\color{red}
 {% endraw %}
 {% if nocliq!='' %}
 Nicht in Cliquen: {{nocliq}}
 {% endif %}
 {% raw %}
-\href{https://networkx.org/documentation/stable/reference/algorithms/community.html#module-networkx.algorithms.community}{Communities}
+}
+\href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.modularity_max.greedy_modularity_communities.html#networkx.algorithms.community.modularity_max.greedy_modularity_communities}{\textbf{Communities:}}
 \vspace{-0.2cm}
 \begin{itemize}
 \setlength\itemsep{0pt}
@@ -260,20 +339,18 @@ Nicht in Cliquen: {{nocliq}}
 \end{minipage}
 \begin{minipage}[t]{0.5\textwidth}
 \vspace{0pt}
-\href{https://en.wikipedia.org/wiki/Betweenness_centrality}{Vernetzung: Betweenness centrality}\par
 {% endraw %}{{ cons }}{% raw %}
+Die Zentralität (Graphentheorie) gibt an, wie viel Einfluss ein Knotenpunkt auf ein Netzwerk hat.
+(\href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.betweenness_centrality.html}{hier}: \texttt{betweenness\_centrality(G, k=None, normalized=True, weight=None, endpoints=False})
 \end{minipage}
-
 \begin{minipage}[t]{\textwidth}
-\vspace{0.5cm}
-Bild 1: Gegenseitige Verbindungen \par
-\includegraphics[width=\linewidth]{soziogramm1.pdf}\\
+Bild 1: Gegenseitige Verbindungen mit Communities\par
+\includegraphics[width=0.9\textwidth]{soziogramm1.pdf}\\
 \end{minipage}
 \par
 \begin{minipage}[t]{\textwidth}
-\vspace{0.5cm}
 Bild 2: Alle Verbindungen \par
-\includegraphics[width=\linewidth]{soziogramm2.pdf}\\
+\includegraphics[width=0.9\textwidth]{soziogramm2.pdf}\\
 \end{minipage}
 \par
 
