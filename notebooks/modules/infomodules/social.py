@@ -127,6 +127,7 @@ class soziogramm(object):
             self.set_node_community(self.G, self.communities)
             self.set_edge_community(self.G)
             node_color = [self.get_color(self.G.nodes[v]['community']) for v in self.G.nodes]
+            node_size = [ (1+betCent[k])**10*200 for k in self.G.nodes ]
             external = [(v, w) for v, w in self.G.edges if self.G.edges[v, w]['community'] == 0]
             internal = [(v, w) for v, w in self.G.edges if self.G.edges[v, w]['community'] > 0]
             internal_color = ['black' for e in internal]
@@ -145,15 +146,16 @@ class soziogramm(object):
                     edge_color="silver",
                     )
             nx.draw_networkx(
-                self.G,
-                ax=ax,
-                pos=pos,
-                alpha=1,
-                width=1,
-                node_color=node_color,
-                edgelist=internal,
-                edge_color=internal_color,
-                )
+                    self.G,
+                    ax=ax,
+                    pos=pos,
+                    alpha=1,
+                    width=1,
+                    node_color=node_color,
+                    node_size=node_size,
+                    edgelist=internal,
+                    edge_color=internal_color,
+                    )
 
         else:
             pos = nx.spring_layout(self.G)
