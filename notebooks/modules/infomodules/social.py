@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import networkx.algorithms.community as nxcom
 import pandas as pd
+import numpy as np
 import os
 from itertools import combinations,chain
 from jinja2 import Environment, BaseLoader
@@ -20,6 +21,8 @@ class soziogramm(object):
     def __init__(self,**kwargs):
         self.config = {}
         self.config.update(kwargs)
+
+        self.version = "0.1.0"
         
         self.tmpdir = os.getcwd()
         
@@ -30,11 +33,12 @@ class soziogramm(object):
         self.cons = None
         self.clique = None
         self.communities = None
+        self.centrality = None
         
         self.template = ""
         self.set_template()
         
-        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', 'comms':''}
+        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', 'comms':'', 'version':self.version }
 
     def read_names(self):
         self.names = pd.read_csv('namen.csv', header=None)
@@ -53,7 +57,37 @@ class soziogramm(object):
     
     def get_communities(self):
         self.communities = sorted(nxcom.greedy_modularity_communities(self.G), key=len, reverse=True)
-        self.rendervars['comms'] = "\\item " + "\n\\item ".join([", ".join(k) for k in self.communities])
+
+        comms = { k+1:list(v) for k,v in enumerate(self.communities) }
+        columns = [ j+1 for j in range(np.array([ len(v) for k,v in comms.items() ]).max()) ]
+        DF_c = pd.DataFrame.from_dict(comms,orient='index',columns=columns).T
+        DF_c_a = { k:DF_c[[k]] for k in DF_c.keys() }
+
+        def get_c(name):
+            if isinstance(name,type(None)):
+                return None
+            else:
+                return self.centrality[name] * 100
+
+        def reformat_name(df):
+            if not pd.isna(df['c']):
+                key_c = list(set(df.keys())-set(['c']))[0]
+                return "{name} ({c:.1f}%)".format(name=df[key_c],c=df['c'])
+            else:
+                return None
+
+        for c in DF_c_a.keys():
+            DF_tmp = DF_c_a[c].copy()
+            DF_tmp['c'] = DF_tmp[c].apply(get_c)
+            DF_tmp = DF_tmp.sort_values('c',ascending=False).reset_index(drop=True)
+            DF_tmp[c] = DF_tmp.apply(reformat_name,axis=1)
+            DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=DF_tmp['c'].sum()), None] 
+            DF_c_a[c] = DF_tmp[[c]]
+            
+        DF_c_a = pd.concat(DF_c_a.values(),axis=1)
+        DF_c_a.fillna('', inplace=True)
+
+        self.rendervars['comms'] = DF_c_a.to_latex(index=False)
         
     def get_clique(self):
         self.clique = [ list(k) for k in nx.find_cliques(self.G) if len(k)>2 ]
@@ -68,6 +102,11 @@ class soziogramm(object):
         self.rendervars['cliquen'] =  "\\item " + "\n\\item ".join(cliques)
         
         self.rendervars['nocliq'] = ", ".join(not_in_clique)
+
+    def get_centrality(self):
+        centrality = nx.betweenness_centrality(self.G, normalized=True, endpoints=False)
+        W=np.array([k for v,k in centrality.items()]).sum()
+        self.centrality = {k:v/W for k,v in centrality.items() }
         
     def make_soziogramm(self, save=False, format='pdf', directed=False):
         self.read_names()
@@ -115,8 +154,8 @@ class soziogramm(object):
         self.fig, ax = plt.subplots(1,1,figsize=(11.69*2,8.27*2))
 
         if not directed:
-            betCent = nx.betweenness_centrality(self.G, normalized=True, endpoints=False)
-            cons  = pd.DataFrame.from_dict({'name': list(betCent.keys()), 'vernetzung': list(betCent.values())})
+            self.get_centrality()
+            cons  = pd.DataFrame.from_dict({'name': list(self.centrality.keys()), 'vernetzung': list(self.centrality.values())})
             cons = cons.sort_values(['vernetzung'],ascending=False).reset_index(drop=True)
             cons['vernetzung'] = cons['vernetzung'].apply(lambda x: "{:.1f}%".format(x*100))
             cons.rename(columns={'vernetzung':'Zentralität', 'name':'Name'}, inplace=True)
@@ -127,7 +166,7 @@ class soziogramm(object):
             self.set_node_community(self.G, self.communities)
             self.set_edge_community(self.G)
             node_color = [self.get_color(self.G.nodes[v]['community']) for v in self.G.nodes]
-            node_size = [ (1+betCent[k])**10*200 for k in self.G.nodes ]
+            node_size = [ (1+self.centrality[k])**10*500 for k in self.G.nodes ]
             external = [(v, w) for v, w in self.G.edges if self.G.edges[v, w]['community'] == 0]
             internal = [(v, w) for v, w in self.G.edges if self.G.edges[v, w]['community'] > 0]
             internal_color = ['black' for e in internal]
@@ -275,6 +314,7 @@ class soziogramm(object):
 \renewcommand{\dateseparator}{.}
 \usepackage{graphicx}
 \usepackage{xcolor}
+\usepackage{multicol}
 \usepackage{float}
 \usepackage{booktabs}
 \usepackage[landscape]{geometry}
@@ -298,7 +338,7 @@ class soziogramm(object):
 \fancyhead[CO,CE]{}
 \fancyfoot[CE,CO]{\leftmark}
 \fancyfoot[CE,CO]{Seite \thepage}
-\fancyfoot[R]{}
+\fancyfoot[R]{v{% endraw %}{{ version }}{% raw %}}
 \fancyfoot[L]{\textcopyright\,Hilberg\,\the\year{}}
 }
 \pagestyle{pdfreport}
@@ -317,33 +357,35 @@ bottom=20mm,
 
 \begin{document}
 
-\begin{minipage}[t]{0.5\textwidth}
+\begin{minipage}[t]{0.7\textwidth}
 \vspace{-0.2cm}
 \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.clique.find_cliques.html#networkx.algorithms.clique.find_cliques}{\textbf{Cliquen:}}
 \vspace{-0.2cm}
+\begin{multicols}{3}
 \begin{itemize}
 \setlength\itemsep{0pt}
 {% endraw %}{{ cliquen }}{% raw %}
 \end{itemize}
-{\color{red}
+\end{multicols}
+{\color{red} \bf
 {% endraw %}
 {% if nocliq!='' %}
 Nicht in Cliquen: {{nocliq}}
 {% endif %}
 {% raw %}
 }
-\href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.modularity_max.greedy_modularity_communities.html#networkx.algorithms.community.modularity_max.greedy_modularity_communities}{\textbf{Communities:}}
-\vspace{-0.2cm}
-\begin{itemize}
-\setlength\itemsep{0pt}
+\vspace{0.5cm}
+\href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.modularity_max.greedy_modularity_communities.html#networkx.algorithms.community.modularity_max.greedy_modularity_communities}{\textbf{Communities:}}\par
+Gruppierungen in der Klasse mit Zentralität\par
 {% endraw %}{{ comms }}{% raw %}
-\end{itemize}
 \end{minipage}
-\begin{minipage}[t]{0.5\textwidth}
+\begin{minipage}[t]{0.3\textwidth}
 \vspace{0pt}
 {% endraw %}{{ cons }}{% raw %}
+\vspace{0.1cm}
 Die Zentralität (Graphentheorie) gibt an, wie viel Einfluss ein Knotenpunkt auf ein Netzwerk hat.
-(\href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.betweenness_centrality.html}{hier}: \texttt{betweenness\_centrality(G, k=None, normalized=True, weight=None, endpoints=False})
+(\href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.betweenness_centrality.html}{hier}: \texttt{betweenness\_centrality(G, k=None, normalized=True, weight=None, endpoints=False})\par
+Die Zentralität einer Klasse ist auf die Summe 100\% normiert.
 \end{minipage}
 \begin{minipage}[t]{\textwidth}
 Bild 1: Gegenseitige Verbindungen mit Communities\par
