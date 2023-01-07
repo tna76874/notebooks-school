@@ -38,7 +38,7 @@ class soziogramm(object):
         self.template = ""
         self.set_template()
         
-        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', 'comms':'', 'version':self.version }
+        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', 'comms':'', 'version':self.version ,'clustering':''}
 
     def read_names(self):
         self.names = pd.read_csv('namen.csv', header=None)
@@ -59,6 +59,9 @@ class soziogramm(object):
         centrality = nx.closeness_centrality(self.G.subgraph(nodes))
         W=np.array([k for v,k in centrality.items()]).sum()
         return { k:v/W for k,v in centrality.items() }
+
+    def get_average_clustering(self,nodes):
+        return nx.average_clustering(self.G.subgraph(nodes))
     
     def get_communities(self):
         self.communities = sorted(nxcom.greedy_modularity_communities(self.G), key=len, reverse=True)
@@ -89,18 +92,28 @@ class soziogramm(object):
 
         for c in DF_c_a.keys():
             DF_tmp = DF_c_a[c].copy()
-            centrality = self.get_closeness_centrality(DF_tmp[c].values)
+            nodenames = [k for k in DF_tmp[c].values if not pd.isnull(k)]
+            centrality = self.get_closeness_centrality(nodenames)
             DF_tmp['c'] = DF_tmp[c].apply(lambda k: get_c_c(k,centrality))
             DF_tmp['b'] = DF_tmp[c].apply(get_b_c)
             DF_tmp = DF_tmp.sort_values('c',ascending=False).reset_index(drop=True)
             DF_tmp[c] = DF_tmp.apply(reformat_name,axis=1)
-            DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=DF_tmp['b'].sum()), None, None] 
+            b_Z = DF_tmp['b'].sum()/100
+            a_C = self.get_average_clustering(nodenames)
+            influence = b_Z*a_C
+            DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=b_Z*100), None, None] 
+            DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=a_C*100), None, None] 
+            DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=b_Z*a_C*100), None, None] 
             DF_c_a[c] = DF_tmp[[c]]
             
         DF_c_a = pd.concat(DF_c_a.values(),axis=1)
+        export_cols = [''] + list(DF_c_a.keys())
         DF_c_a.fillna('', inplace=True)
+        DF_c_a[''] = ['']*(len(DF_c_a)-3)+ ['Z.', 'd.C.', 'Einfluss']
+        DF_c_a = DF_c_a[export_cols]
 
         self.rendervars['comms'] = DF_c_a.to_latex(index=False)
+        self.rendervars['clustering'] = "{c:.1f}\%".format(c=self.get_average_clustering(self.G.nodes)*100)
         
     def get_clique(self):
         self.clique = [ list(k) for k in nx.find_cliques(self.G) if len(k)>2 ]
@@ -389,12 +402,15 @@ Nicht in Cliquen: {{nocliq}}
 }
 \vspace{0.5cm}
 \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.modularity_max.greedy_modularity_communities.html#networkx.algorithms.community.modularity_max.greedy_modularity_communities}{\textbf{Communities:}}\par
-Gruppierungen in der Klasse mit \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.closeness_centrality.html}{\texttt{closeness}-Zentralität und Zentralität}.\par
+Gruppierungen in der Klasse mit \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.closeness_centrality.html}{\texttt{closeness}-Zentralität}, Zentralität und durchschnittlichem Clustering.\par
 \vspace{0.2cm}
 {% endraw %}{{ comms }}{% raw %}
 \vspace{0.4cm}
 Hinter jedem Namen ist die (auf die Gruppe normierte) \texttt{closeness}-Zentralität angegben. Dies gibt den Einfluss der Person auf die Gruppe an. Unter der Gruppe
-ist jeweis die Summe der Zentralitäten angegeben - so viel Einfluss hat die Gruppe auf die gesamte Klasse.
+ist jeweis die Summe der Zentralitäten (Z.) angegeben - so viel Einfluss hat die Gruppe auf die gesamte Klasse. Das \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.cluster.average_clustering.html}{durchschnittliche Clustering} (d.C.) darunter gibt an, wie
+eng die Gruppe miteinander befreundet ist. In jeder Clique ist das d.C. beispielsweise 100\%. Der Einfluss ist das Produkt aus Z. und d.C.\par
+\vspace{0.2cm}
+\textbf{durchschnittlichs Clustering der gesamten Klasse: {% endraw %}{{ clustering }}{% raw %}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.3\textwidth}
