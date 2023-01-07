@@ -19,10 +19,12 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 class soziogramm(object):
     def __init__(self,**kwargs):
-        self.config = {}
+        self.config =   {
+                        'data' : 'namen.xlsx'
+                        }
         self.config.update(kwargs)
 
-        self.version = "0.1.0"
+        self.__version__ = "0.1.1"
         
         self.tmpdir = os.getcwd()
         
@@ -38,10 +40,21 @@ class soziogramm(object):
         self.template = ""
         self.set_template()
         
-        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', 'comms':'', 'version':self.version ,'clustering':''}
+        self.rendervars = {'cons':'', 'cliques':'', 'nocliq':'', 'comms':'', 'version':self.__version__ ,'clustering':''}
 
     def read_names(self):
-        self.names = pd.read_csv('namen.csv', header=None)
+        extension = os.path.splitext(self.config['data'])[-1]
+        filename = os.path.abspath(self.config['data'])
+        if extension=='.csv':
+            self.read_names_csv(filename=filename)
+        elif extension=='.xlsx':
+            self.read_names_xslx(filename=filename)
+
+    def read_names_xslx(self,filename='namen.xlsx'):
+        self.names = pd.read_excel(filename, sheet_name=0, header=None)
+
+    def read_names_csv(self,filename='namen.csv'):
+        self.names = pd.read_csv(filename, header=None)
     
     def save(self, format='pdf', name='soziogramm'):
         self.fig.savefig(os.path.join(self.tmpdir,name+"."+format))
@@ -100,16 +113,14 @@ class soziogramm(object):
             DF_tmp[c] = DF_tmp.apply(reformat_name,axis=1)
             b_Z = DF_tmp['b'].sum()/100
             a_C = self.get_average_clustering(nodenames)
-            influence = b_Z*a_C
             DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=b_Z*100), None, None] 
             DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=a_C*100), None, None] 
-            DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=b_Z*a_C*100), None, None] 
             DF_c_a[c] = DF_tmp[[c]]
             
         DF_c_a = pd.concat(DF_c_a.values(),axis=1)
         export_cols = [''] + list(DF_c_a.keys())
         DF_c_a.fillna('', inplace=True)
-        DF_c_a[''] = ['']*(len(DF_c_a)-3)+ ['Z.', 'd.C.', 'Einfluss']
+        DF_c_a[''] = ['']*(len(DF_c_a)-2)+ ['Z.', 'd.C.']
         DF_c_a = DF_c_a[export_cols]
 
         self.rendervars['comms'] = DF_c_a.to_latex(index=False)
@@ -408,7 +419,7 @@ Gruppierungen in der Klasse mit \href{https://networkx.org/documentation/stable/
 \vspace{0.4cm}
 Hinter jedem Namen ist die (auf die Gruppe normierte) \texttt{closeness}-Zentralität angegben. Dies gibt den Einfluss der Person auf die Gruppe an. Unter der Gruppe
 ist jeweis die Summe der Zentralitäten (Z.) angegeben - so viel Einfluss hat die Gruppe auf die gesamte Klasse. Das \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.cluster.average_clustering.html}{durchschnittliche Clustering} (d.C.) darunter gibt an, wie
-eng die Gruppe miteinander befreundet ist. In jeder Clique ist das d.C. beispielsweise 100\%. Der Einfluss ist das Produkt aus Z. und d.C.\par
+eng die Gruppe miteinander befreundet ist. In jeder Clique ist das d.C. beispielsweise 100\%.\par
 \vspace{0.2cm}
 \textbf{durchschnittlichs Clustering der gesamten Klasse: {% endraw %}{{ clustering }}{% raw %}}
 \end{minipage}
