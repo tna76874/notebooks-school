@@ -54,6 +54,11 @@ class soziogramm(object):
 
         with open(renderfile, "w",encoding="utf8") as myfile:
             myfile.write(template_out)
+
+    def get_closeness_centrality(self,nodes):
+        centrality = nx.closeness_centrality(self.G.subgraph(nodes))
+        W=np.array([k for v,k in centrality.items()]).sum()
+        return { k:v/W for k,v in centrality.items() }
     
     def get_communities(self):
         self.communities = sorted(nxcom.greedy_modularity_communities(self.G), key=len, reverse=True)
@@ -63,7 +68,13 @@ class soziogramm(object):
         DF_c = pd.DataFrame.from_dict(comms,orient='index',columns=columns).T
         DF_c_a = { k:DF_c[[k]] for k in DF_c.keys() }
 
-        def get_c(name):
+        def get_c_c(name,centrality):
+            if isinstance(name,type(None)):
+                return None
+            else:
+                return centrality[name] * 100
+            
+        def get_b_c(name):
             if isinstance(name,type(None)):
                 return None
             else:
@@ -71,17 +82,19 @@ class soziogramm(object):
 
         def reformat_name(df):
             if not pd.isna(df['c']):
-                key_c = list(set(df.keys())-set(['c']))[0]
+                key_c = list(set(df.keys())-set(['c','b']))[0]
                 return "{name} ({c:.1f}%)".format(name=df[key_c],c=df['c'])
             else:
                 return None
 
         for c in DF_c_a.keys():
             DF_tmp = DF_c_a[c].copy()
-            DF_tmp['c'] = DF_tmp[c].apply(get_c)
+            centrality = self.get_closeness_centrality(DF_tmp[c].values)
+            DF_tmp['c'] = DF_tmp[c].apply(lambda k: get_c_c(k,centrality))
+            DF_tmp['b'] = DF_tmp[c].apply(get_b_c)
             DF_tmp = DF_tmp.sort_values('c',ascending=False).reset_index(drop=True)
             DF_tmp[c] = DF_tmp.apply(reformat_name,axis=1)
-            DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=DF_tmp['c'].sum()), None] 
+            DF_tmp.loc[len(DF_tmp.index)] = ["{c:.1f}%".format(c=DF_tmp['b'].sum()), None, None] 
             DF_c_a[c] = DF_tmp[[c]]
             
         DF_c_a = pd.concat(DF_c_a.values(),axis=1)
@@ -357,7 +370,7 @@ bottom=20mm,
 
 \begin{document}
 
-\begin{minipage}[t]{0.7\textwidth}
+\begin{minipage}[t]{0.6\textwidth}
 \vspace{-0.2cm}
 \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.clique.find_cliques.html#networkx.algorithms.clique.find_cliques}{\textbf{Cliquen:}}
 \vspace{-0.2cm}
@@ -376,9 +389,14 @@ Nicht in Cliquen: {{nocliq}}
 }
 \vspace{0.5cm}
 \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.modularity_max.greedy_modularity_communities.html#networkx.algorithms.community.modularity_max.greedy_modularity_communities}{\textbf{Communities:}}\par
-Gruppierungen in der Klasse mit Zentralität\par
+Gruppierungen in der Klasse mit \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.closeness_centrality.html}{\texttt{closeness}-Zentralität und Zentralität}.\par
+\vspace{0.2cm}
 {% endraw %}{{ comms }}{% raw %}
+\vspace{0.4cm}
+Hinter jedem Namen ist die (auf die Gruppe normierte) \texttt{closeness}-Zentralität angegben. Dies gibt den Einfluss der Person auf die Gruppe an. Unter der Gruppe
+ist jeweis die Summe der Zentralitäten angegeben - so viel Einfluss hat die Gruppe auf die gesamte Klasse.
 \end{minipage}
+\hfill
 \begin{minipage}[t]{0.3\textwidth}
 \vspace{0pt}
 {% endraw %}{{ cons }}{% raw %}
@@ -387,6 +405,7 @@ Die Zentralität (Graphentheorie) gibt an, wie viel Einfluss ein Knotenpunkt auf
 (\href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.betweenness_centrality.html}{hier}: \texttt{betweenness\_centrality(G, k=None, normalized=True, weight=None, endpoints=False})\par
 Die Zentralität einer Klasse ist auf die Summe 100\% normiert.
 \end{minipage}
+\par
 \begin{minipage}[t]{\textwidth}
 Bild 1: Gegenseitige Verbindungen mit Communities\par
 \includegraphics[width=0.9\textwidth]{soziogramm1.pdf}\\
