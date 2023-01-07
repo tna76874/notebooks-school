@@ -421,7 +421,7 @@ Hinter jedem Namen ist die (auf die Gruppe normierte) \texttt{closeness}-Zentral
 ist jeweis die Summe der Zentralitäten (Z.) angegeben - so viel Einfluss hat die Gruppe auf die gesamte Klasse. Das \href{https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.cluster.average_clustering.html}{durchschnittliche Clustering} (d.C.) darunter gibt an, wie
 eng die Gruppe miteinander befreundet ist. In jeder Clique ist das d.C. beispielsweise 100\%.\par
 \vspace{0.2cm}
-\textbf{durchschnittlichs Clustering der gesamten Klasse: {% endraw %}{{ clustering }}{% raw %}}
+\textbf{durchschnittliches Clustering der gesamten Klasse: {% endraw %}{{ clustering }}{% raw %}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.3\textwidth}
