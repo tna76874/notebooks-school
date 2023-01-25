@@ -16,3 +16,4 @@ uncertainties==3.1.7
 openpyxl==3.0.10
 PythonTurtle==0.3.2
 ipyturtle3==0.1.4
+googletrans==3.1.0a0
