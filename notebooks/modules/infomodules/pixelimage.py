@@ -166,7 +166,7 @@ class pixelimage(object):
         fig.savefig(savename + f'.{imgformat}', **cvars)
     
     def speichern(self):
-        self.save(self.figure,savename='bild',format='jpg')
+        self.save(self.fig,savename='bild',format='jpg')
 
 # Hard-coded driver function to run the program
 def main(): pass
