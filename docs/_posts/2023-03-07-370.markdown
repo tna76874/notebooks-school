@@ -1,0 +1,8 @@
+---
+layout: default
+modal-id: 1
+img: jupyter.svg
+title: Jupyter Notebooks
+alt: image-alt
+description: Mit Jupyter-Notebooks lassen sich Arbeitsaufträge vorstrukturieren und bearbeiten.
+---

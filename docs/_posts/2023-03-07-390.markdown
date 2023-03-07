@@ -1,0 +1,8 @@
+---
+layout: default
+modal-id: 3
+img: turtle.png
+title: Python / Turtle
+alt: image-alt
+description: Mit der modernen und einfach strukturierten Programmiersprache Python können spielerische Laufanweisungen an eine Schildkröte gegeben werden.
+---

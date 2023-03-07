@@ -1,0 +1,8 @@
+---
+layout: default
+modal-id: 4
+img: blockly.png
+title: Blockly
+alt: image-alt
+description: Visuelles Programmieren mit Blockly erleichtert den Einstieg in das Programmieren.
+---

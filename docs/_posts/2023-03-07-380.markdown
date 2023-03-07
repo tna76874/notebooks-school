@@ -1,0 +1,8 @@
+---
+layout: default
+modal-id: 2
+img: docker.svg
+title: Container
+alt: image-alt
+description: Die Arbeitsumgebungen der Schüler befinden sich in Docker-Containerumgebungen, die sich bequem über den Webbrowser aufrufen lassen.
+---
