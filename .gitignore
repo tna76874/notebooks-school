@@ -409,3 +409,11 @@ TSWLatexianTemp*
 # Makeindex log files
 *.lpz
 © 2019 GitHub, Inc.
+.DS_Store
+
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+
+Gemfile.lock
