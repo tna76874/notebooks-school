@@ -2,10 +2,14 @@
 title: Informatikunterricht mit Python
 email: f/xgebkgvl
 url: https://tna76874.github.io/notebooks-school
-description: "Moderner Informatikunterricht mit Python-Notebooks"
+description: "moderner Informatikunterricht mit Python-Notebooks"
 keywords: "Informatikunterricht, Python"
 skills: "Moderner Informatikunterricht mit Python-Notebooks"
 meta_author: LMH
+
+binder_commit: 61147dc15394dab240c603760a786aa817aca8ca
+
+blockly_url: https://trinket.io/embed/blocks/600acf523e
 
 # Google webmaster tools
 google_verify:

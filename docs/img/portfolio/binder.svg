@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   width="301.64853"
+   height="301.64853"
+   viewBox="0 0 301.64854 301.64852"
+   enable-background="new 0 0 212.118 65.883"
+   xml:space="preserve"
+   sodipodi:docname="binder.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs1518">
+	
+
+		
+		
+		
+		
+		
+		
+	</defs><sodipodi:namedview
+   id="namedview1516"
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1.0"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#d1d1d1"
+   showgrid="false"
+   inkscape:zoom="0.89552688"
+   inkscape:cx="32.383171"
+   inkscape:cy="66.999664"
+   inkscape:window-width="1851"
+   inkscape:window-height="1015"
+   inkscape:window-x="69"
+   inkscape:window-y="28"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Layer_1" />
+<g
+   id="g330"
+   transform="matrix(6.238273,0,0,6.238273,47.118596,18.325836)"><circle
+     fill="none"
+     stroke="#f5a252"
+     stroke-width="4.8342"
+     stroke-miterlimit="10"
+     cx="21.288099"
+     cy="11.9591"
+     r="9.5419998"
+     id="circle1501" /><circle
+     fill="none"
+     stroke="#579aca"
+     stroke-width="4.8342"
+     stroke-miterlimit="10"
+     cx="21.288099"
+     cy="30.519102"
+     r="9.5430002"
+     id="circle1503" /><circle
+     fill="none"
+     stroke="#e66581"
+     stroke-width="4.8342"
+     stroke-miterlimit="10"
+     cx="11.9601"
+     cy="21.309103"
+     r="9.5430002"
+     id="circle1505" /><path
+     fill="none"
+     stroke="#579aca"
+     stroke-width="4.8342"
+     stroke-miterlimit="10"
+     d="m 13.6051,24.856101 c 0.759,-1.031 1.74,-1.927 2.921,-2.607 4.566,-2.63 10.401,-1.06 13.031,3.507"
+     id="path1507" /><path
+     fill="none"
+     stroke="#f5a252"
+     stroke-width="4.8342"
+     stroke-miterlimit="10"
+     d="m 13.0191,16.721101 c -2.63,-4.566 -1.061,-10.401 3.507,-13.032 4.567,-2.63 10.401,-1.059 13.031,3.508"
+     id="path1509" /></g>
+<rect
+   style="fill:none;stroke-width:66.2308;stroke-linecap:round;stroke-linejoin:round;paint-order:fill markers stroke"
+   id="rect384"
+   width="301.64853"
+   height="301.64853"
+   x="0"
+   y="0" /></svg>

@@ -1,0 +1,8 @@
+---
+layout: default
+modal-id: 5
+img: github.svg
+title: Github
+alt: image-alt
+description: Der Quellcode zu diesem Projekt liegt öffentlich auf Github - jede Lehrkraft kann sich eine eigene Arbeitsumgebung anpassen.
+---

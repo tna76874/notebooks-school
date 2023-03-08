@@ -1,0 +1,9 @@
+---
+layout: default
+modal-id: 6
+img: binder.svg
+title: mybinder.org
+alt: image-alt
+description: Mit  <a href="https://mybinder.org/" target="_blank">mybinder.org</a> können temporäre Arbeitsumgebungen für Schüler und Schülerinnen angefragt werden. Erstellt werden sie aufgrund der Anleitungen die bei github abgelegt sind.
+
+---
