@@ -67,6 +67,21 @@ class newturtle(customturtle):
        
         super().__init__(self.screen)
 
+        self.shape("turtle")
+
+    def route(self):
+        runner = newturtle(screen=self.screen)
+        self.screen.delay(2)
+        runner.color('red')
+        runner.speed(1000)
+        runner.pendown()
+        stepsize = 20
+        increment = 10
+        for i in range(5):
+            runner.forward(stepsize)
+            runner.left(90)
+            stepsize += increment
+
     def introimage(self):   
         """
         letting turtle run introimage of skript
