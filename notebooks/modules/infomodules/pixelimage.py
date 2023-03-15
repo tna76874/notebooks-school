@@ -99,6 +99,10 @@ class pixelimage(object):
             binnumber = self.bnum
             imsize = self.dims
 
+        bin_len = imsize[0]*imsize[1]
+        if len(binnumber)<bin_len:
+            binnumber += "".join(['0']*(bin_len-len(binnumber)))
+
         self.minbit = minbit
         self.update_attr()
         
