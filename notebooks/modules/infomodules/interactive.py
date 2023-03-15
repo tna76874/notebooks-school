@@ -14,18 +14,22 @@ class interactivepixelimage(pixelimage):
         super().__init__(*args,**kwargs)
         self.set_colormap(one="black")
 
-        self.initbin = '10011100011111110111000111111000111111000111111101111110101011111000111111101111111101111111010111110111011011111110'
+        self.initbin = '10011100100000001000111000000111000000111000000010000001010100000111000000010000000010000000101000001000100100000001'
+
+    def spacecat(self):
+        try:
+            image = imread("nbmedia/spacecat.jpg")
+            im = self.ax[0].imshow(image)
+            self.ax[0].get_xaxis().set_visible(False)
+            self.ax[0].get_yaxis().set_visible(False)
+        except: pass        
 
     def f(self, image_bin, bitlaenge):
         self.initfig()
         try:
             imsize = (self.todez(image_bin[:bitlaenge]),self.todez(image_bin[bitlaenge:2*bitlaenge]))
-            self.create_pixel_image(bimage=image_bin[2*bitlaenge:],imsize=imsize)
-            self.plot(self.ax[0])
-        except:
-            try:
-                image = imread("nbmedia/spacecat.jpg")
-                im = self.ax[0].imshow(image)
-                self.ax[0].get_xaxis().set_visible(False)
-                self.ax[0].get_yaxis().set_visible(False)
-            except: pass
+            if len(image_bin)<2*bitlaenge: self.spacecat()
+            else:
+                self.create_pixel_image(bimage=image_bin[2*bitlaenge:],imsize=imsize)
+                self.plot(self.ax[0])
+        except: self.spacecat()
