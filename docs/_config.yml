@@ -4,12 +4,21 @@ email: f/xgebkgvl
 url: https://tna76874.github.io/notebooks-school
 description: "moderner Informatikunterricht mit Python-Notebooks"
 keywords: "Informatikunterricht, Python"
-skills: "Moderner Informatikunterricht mit Python-Notebooks"
+skills: "moderner Informatikunterricht mit Python-Notebooks"
 meta_author: LMH
 
 binder_commit: 61147dc15394dab240c603760a786aa817aca8ca
 
-blockly_url: https://trinket.io/embed/blocks/600acf523e
+blockly_url: 
+
+urlcollection:
+  blockly:
+    title: Blockly
+    url: https://trinket.io/embed/blocks/600acf523e
+  
+  webassemblypython: 
+    title: Python Lite
+    url: https://jupyter.org/try-jupyter/lab/
 
 # Google webmaster tools
 google_verify:
