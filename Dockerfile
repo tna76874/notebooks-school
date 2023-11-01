@@ -36,7 +36,7 @@ USER ${NB_USER}
 
 COPY ./requirements.txt . 
 
-RUN python3 -m pip install --no-cache-dir notebook jupyterlab jupyterhub &&\
+RUN python3 -m pip install --no-cache-dir notebook jupyterlab jupyterhub jupyterlab-link-share &&\
     pip install --no-cache-dir -r requirements.txt &&\
     pip install jupyter_contrib_nbextensions ipywidgets &&\
     jupyter contrib nbextension install --user &&\
