@@ -1,0 +1,26 @@
+FROM ghcr.io/tna76874/schoolnotebookbase:stable-20231102
+
+USER root
+
+ENV SETUP_STATUS="production"
+ENV REPO_USER="tna76874"
+ENV REPO_NAME="notebooks-school"
+
+COPY ./scripts/docker-entrypoint.sh /
+COPY ./scripts/run_on_init /usr/local/bin/
+COPY ./scripts/update_notebooks /usr/local/bin/
+RUN chmod 775 /usr/local/bin/run_on_init
+RUN chmod 775 /usr/local/bin/update_notebooks
+
+
+ARG NB_USER=jovyan
+ARG NB_UID=1000
+ENV USER ${NB_USER}
+ENV NB_UID ${NB_UID}
+ENV HOME /home/${NB_USER}
+
+RUN chmod 775 /docker-entrypoint.sh
+
+USER ${NB_USER}
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
