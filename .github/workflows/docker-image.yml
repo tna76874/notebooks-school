@@ -28,6 +28,7 @@ jobs:
       run: |
           COMMIT_HASH=$(git rev-parse HEAD)
           CURRENT_DATE=$(date +'%Y%m%d')
+          CURRENT_DATE_WITH_HOUR=$(date +'%Y%m%d%H')
           IMAGE_NAME="ghcr.io/tna76874/schoolnotebook"
 
           # Build image for master branch
@@ -40,6 +41,8 @@ jobs:
             CHANNEL="stable"
             docker build . --file Dockerfile_build --tag ${IMAGE_NAME}:${CHANNEL}-${CURRENT_DATE}
             docker push ${IMAGE_NAME}:${CHANNEL}-${CURRENT_DATE}
+            docker build . --file Dockerfile_build --tag ${IMAGE_NAME}:${CHANNEL}-${CURRENT_DATE_WITH_HOUR}
+            docker push ${IMAGE_NAME}:${CHANNEL}-${CURRENT_DATE_WITH_HOUR}
           fi
 
           docker build . --file Dockerfile_build --tag ${IMAGE_NAME}:${COMMIT_HASH}

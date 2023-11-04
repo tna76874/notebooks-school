@@ -1,1 +1,1 @@
-FROM ghcr.io/tna76874/schoolnotebook:stable-20231102
+FROM ghcr.io/tna76874/schoolnotebook:stable-2023110415
