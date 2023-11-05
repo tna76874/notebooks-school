@@ -50,3 +50,6 @@ jobs:
 
           docker build . --file Dockerfile_build --tag ${IMAGE_NAME}:${CHANNEL}
           docker push ${IMAGE_NAME}:${CHANNEL}
+
+          # Trigger MyBinder Build
+          curl -L --connect-timeout 10 --max-time 30 https://mybinder.org/v2/gh/${GITHUB_REPOSITORY}/${GITHUB_REF} >/dev/null 2>&1 ||:
