@@ -1,4 +1,4 @@
-FROM ghcr.io/tna76874/schoolnotebookbase:stable-2023110208
+FROM ghcr.io/tna76874/schoolnotebookbase:stable-2023110415
 
 USER root
 
