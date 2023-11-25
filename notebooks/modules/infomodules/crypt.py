@@ -3,6 +3,8 @@
 """
 Crypto modules
 """
+from numpy import random
+
 
 def caesar_verschlüsseln(text, key):
     if isinstance(key,str): key = ord(key.upper()) - ord('A')
@@ -14,6 +16,20 @@ def caesar_entschlüsseln(cipher, key):
 
 def buchstaben_haeufigkeiten(satz):
     _ = [print (f'{k[0]} : {k[1]*100:.2f}%') for k in sorted({buchstabe.lower(): satz.lower().count(buchstabe.lower()) / len(satz) for buchstabe in set(satz) if buchstabe.isalpha()}.items(), key=lambda x: x[1], reverse=True)]
+
+class MV:
+    def __init__(self, geheimalphabet=None):
+        self.alphabet = 'abcdefghijklmnopqrstuvwxyz'
+        random.seed(42)
+        geheim = ''.join(random.permutation(list(self.alphabet)))
+        self.klartextalphabet = self.alphabet.lower() + self.alphabet.upper()
+        self.geheimalphabet = (geheimalphabet or geheim).lower() + (geheimalphabet or geheim).upper()
+        
+    def verschluessele(self, nachricht):
+        return nachricht.translate(str.maketrans(self.klartextalphabet, self.geheimalphabet))
+
+    def entschluessele(self, verschluesselt):
+        return verschluesselt.translate(str.maketrans(self.geheimalphabet, self.klartextalphabet))
 
 if __name__ == "__main__":
     caesar_verschlüsseln('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'D')
@@ -51,3 +67,7 @@ if __name__ == "__main__":
     Kerckhoffs.
 
     """)
+
+
+    MV('skhmyfradbniugwecxtopjqzvl').verschluessele('Diese Verschluesselung ist etwas sicherer.')
+    MV('skhmyfradbniugwecxtopjqzvl').entschluessele('Mdyty Jyxthaipyttyipgr dto yoqst tdhayxyx.')
