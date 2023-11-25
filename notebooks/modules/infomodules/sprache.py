@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Sprache modules
+"""
 from googletrans import Translator
 from num2words import num2words
 import random
@@ -12,10 +17,9 @@ class sprache:
 
     def erkennen(self, text):
         result = self.translator.detect(text)
-        print(f"Sprache: {result.lang}\nSo sicher wurde die Sprache erkannt: {result.confidence * 100}%")
+        print(f"Sprache: {result.lang}\nSo sicher wurde die Sprache erkannt: {result.confidence * 100:.0f}%")
         return result.lang, result.confidence
 
-# Beispielanwendung
 if __name__ == "__main__":
     sprachuebersetzer = sprache()
 
