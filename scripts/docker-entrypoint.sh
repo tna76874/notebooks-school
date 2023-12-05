@@ -13,6 +13,6 @@ if [ "$SETUP_STATUS" = "production" ]; then
     get_latest_init_script ||:
 fi
 
-"$RUN_ON_INIT_PATH"
+"$RUN_ON_INIT_PATH" &
 
 exec "$@"
