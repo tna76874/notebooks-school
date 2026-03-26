@@ -23,4 +23,6 @@ RUN chmod 775 /docker-entrypoint.sh
 
 USER ${NB_USER}
 
+RUN echo 'git config --global init.defaultBranch main' >> /home/${NB_USER}/.bashrc
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
