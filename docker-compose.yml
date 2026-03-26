@@ -1,8 +1,9 @@
-version: "3.9"
 services:
   notebook:
     image: jupyter/schoolnotebooks
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile_build
     environment:
      - SETUP_STATUS=testing
     volumes:
