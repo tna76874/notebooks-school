@@ -292,26 +292,44 @@ class soziogramm(object):
         b = low + span * (((i + b_off) * 7) % n) / (n - 1)
         return (r, g, b)
 
-    def run_latex(self,input_filename, output_filename,runinfo=None,latex="/usr/bin/pdflatex",ending='tex'):
-        input_filename = os.path.abspath(input_filename+'.'+ending)
-        input_filename = (os.path.dirname(input_filename),os.path.basename(input_filename))
-
-        output_filename = os.path.abspath(output_filename)
-        output_filename = (os.path.dirname(output_filename),os.path.basename(output_filename))
-        
-        if not isinstance(runinfo,type(None)):
-            print("Compiling {out}.pdf (Run {run}/{total})".format(out=output_filename[1],run=runinfo[0],total=runinfo[1]))
+    def run_latex(self, input_filename, output_filename, runinfo=None, latex=None, ending='tex'):
+            # 1. Compiler-Suche (Priority: pdflatex, dann xelatex)
+            if latex is None:
+                for compiler in ['pdflatex', 'xelatex']:
+                    found_path = shutil.which(compiler)
+                    if found_path:
+                        latex = found_path
+                        break
+                
+                if not latex:
+                    raise FileNotFoundError("Weder 'pdflatex' noch 'xelatex' wurde im System-Pfad gefunden.")
+    
+            # Pfade absolut machen und in Verzeichnis/Dateiname splitten
+            input_path = os.path.abspath(input_filename + '.' + ending)
+            input_dir = os.path.dirname(input_path)
+            input_base = os.path.basename(input_path)
+    
+            output_path = os.path.abspath(output_filename)
+            output_base = os.path.basename(output_path)
             
-        cmd = [
-            latex,
-            '-output-format=pdf',
-            '-jobname=' + output_filename[1],
+            # Fortschrittsanzeige
+            if runinfo is not None:
+                print(f"Compiling {output_base}.pdf (Run {runinfo[0]}/{runinfo[1]}) using {os.path.basename(latex)}")
+                
+            # Befehl zusammenbauen
+            # -interaction=nonstopmode verhindert, dass das Script bei LaTeX-Fehlern auf Input wartet
+            cmd = [
+                latex,
+                '-interaction=nonstopmode',
+                '-output-format=pdf',
+                f'-jobname={output_base}',
+                f'"{input_base}"',
+                '>/dev/null 2>&1'
             ]
-        cmd += [
-            input_filename[1],
-            '>/dev/null 2>&1',
-            ]
-        os.system(" ".join(cmd))
+            
+            # Ausführung im korrekten Verzeichnis
+            cmd_str = " ".join(cmd)
+            os.system(f"cd {input_dir} && {cmd_str}")
         
     def create_pdf(self,input_filename, output_filename,n=2):
         self.run_latex(input_filename, output_filename)
