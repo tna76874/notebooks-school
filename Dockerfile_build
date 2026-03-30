@@ -1,4 +1,4 @@
-FROM ghcr.io/tna76874/schoolnotebookbase:stable-2024010518
+FROM ghcr.io/tna76874/schoolnotebookbase:stable-2026033009
 
 USER root
 
@@ -23,6 +23,8 @@ RUN chmod 775 /docker-entrypoint.sh
 
 USER ${NB_USER}
 
-RUN echo 'git config --global init.defaultBranch main' >> /home/${NB_USER}/.bashrc
+COPY --chown=${NB_USER}:${NB_USER} ./requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
