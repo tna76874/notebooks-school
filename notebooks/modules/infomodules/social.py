@@ -123,7 +123,7 @@ class soziogramm(object):
         DF_c_a[''] = ['']*(len(DF_c_a)-2)+ ['Z.', 'd.C.']
         DF_c_a = DF_c_a[export_cols]
 
-        self.rendervars['comms'] = DF_c_a.to_latex(index=False)
+        self.rendervars['comms'] = DF_c_a.to_latex(index=False).replace('%',r'\%')
         self.rendervars['clustering'] = "{c:.1f}\%".format(c=self.get_average_clustering(self.G.nodes)*100)
         
     def get_clique(self):
@@ -197,7 +197,7 @@ class soziogramm(object):
             cons['vernetzung'] = cons['vernetzung'].apply(lambda x: "{:.1f}%".format(x*100))
             cons.rename(columns={'vernetzung':'Zentralität', 'name':'Name'}, inplace=True)
             self.cons = cons
-            self.rendervars['cons'] = self.cons.to_latex(index=False)
+            self.rendervars['cons'] = self.cons.to_latex(index=False).replace('%',r'\%')
 
             self.get_communities()
             self.set_node_community(self.G, self.communities)
