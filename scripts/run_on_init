@@ -2,3 +2,22 @@
 set -e
 
 /usr/local/bin/update_notebooks ||:
+
+
+setup_ssh() {
+    local target_dir="/home/jovyan/.ssh"
+    local key_file="$target_dir/id_rsa"
+
+    mkdir -p "$target_dir"
+
+    rm -f "$key_file" "$key_file.pub"
+
+    ssh-keygen -t rsa -b 4096 -N "" -f "$key_file" -q
+
+    chmod 700 "$target_dir"
+    chmod 600 "$key_file"
+    chmod 644 "$key_file.pub"
+
+    chown -R jovyan:users "$target_dir" 2>/dev/null || chown -R jovyan:jovyan "$target_dir" || true
+}
+setup_ssh
