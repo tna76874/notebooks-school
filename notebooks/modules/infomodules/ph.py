@@ -90,66 +90,110 @@ cn.populate_namespace()
 
 # classes
 class einsetzen(object):
-    def __init__(self, func=None,werte={}):
+    def __init__(self, func=None, werte={}, sigfigs=3):
+        self.sigfigs = sigfigs
         self.werte = werte
         self.func = func
         
-        if not isinstance(self.func,type(None)):
+        if not isinstance(self.func, type(None)):
+            self._parse_werte(werte)
             self.ensure_sympy_func()
             self.ensure_sympy_vars()
             self.calc_missing_vars()
+            self._apply_target_units()
             self.print_result()
     
-    def ensure_base_units():
-        for key,value in self.werte.items():
-            self.werte[key] = value.to_base_units()
+    def _parse_werte(self, raw_werte):
+        self.input_werte = {}
+        self.target_units = {}
+        
+        for key, val in raw_werte.items():
+            sym = key if isinstance(key, sp.Symbol) else sp.sympify(key)
+            
+            if isinstance(val, tuple):
+                q, unit = val
+                if q is not None:
+                    self.input_werte[sym] = q
+                if unit is not None:
+                    self.target_units[sym] = unit
+            elif isinstance(val, str):
+                self.target_units[sym] = val
+            else:
+                self.input_werte[sym] = val
         
     def ensure_sympy_func(self):
-        if not isinstance(self.func,sp.core.symbol.Symbol):
-            LS, RS = self.func.split("=")
-            self.func = sp.sympify(LS)-sp.sympify(RS)
+        if not isinstance(self.func, sp.core.symbol.Symbol):
+            if isinstance(self.func, str) and "=" in self.func:
+                LS, RS = self.func.split("=")
+                self.func = sp.sympify(LS) - sp.sympify(RS)
+            elif not isinstance(self.func, sp.Expr):
+                self.func = sp.sympify(self.func)
     
     def ensure_sympy_vars(self):
         sym_werte = {}
-        for key,value in self.werte.items():
-            if isinstance(key,sp.core.symbol.Symbol):
+        for key, value in self.input_werte.items():
+            if isinstance(key, sp.core.symbol.Symbol):
                 sym_werte[key] = value
             else:
                 sym_werte[sp.sympify(key)] = value
-        self.werte = sym_werte
+        self.input_werte = sym_werte
         
-    def place_vals_in_funct(self,func,werte):
-        if isinstance(func,pn.Quantity):
-            unit = self.func.u
-            func = self.func.m
-        else:
-            unit = 1
-        lam = lambdify(tuple(werte.keys()),func)
-        result = lam(*list(werte.values()))*unit
-        result = result.to_base_units()
+    def place_vals_in_funct(self, func, werte):
+        lam = lambdify(tuple(werte.keys()), func)
+        result = lam(*list(werte.values()))
+        # Verhindert wilde Misch-Einheiten durch automatische Reduktion auf Basiseinheiten
+        if hasattr(result, 'to_base_units'):
+            result = result.to_base_units()
         return result
         
     def calc_missing_vars(self):
         symbols = list()
-        for k in self.werte.keys(): symbols+=list(k.free_symbols)
+        for k in self.input_werte.keys(): 
+            symbols += list(k.free_symbols)
         given_symbols = list(self.func.free_symbols)
 
+        current_werte = self.input_werte.copy()
+
         for i in list(set(given_symbols).difference(set(symbols))):
-            if set(symbols).issubset((set(given_symbols)|set([i]))):
-                sols = sp.solve(self.func,i)
+            if set(symbols).issubset((set(given_symbols) | set([i]))):
+                sols = sp.solve(self.func, i)
                 for idx, sol in enumerate(sols):
-                    if len(sols)>1:
-                        key = sp.sympify(str(i)+'_'+str(idx+1))
+                    if len(sols) > 1:
+                        key = sp.sympify(str(i) + '_' + str(idx + 1))
                     else:
                         key = i
-                    self.werte[key] = self.place_vals_in_funct(sol,self.werte)
+                    val = self.place_vals_in_funct(sol, current_werte)
+                    current_werte[key] = val
+                    self.input_werte[key] = val
                     
+    def _apply_target_units(self):
+        for key, val in list(self.input_werte.items()):
+            target = None
+            if key in self.target_units:
+                target = self.target_units[key]
+            else:
+                # Erkennt auch indizierte Variablen wie v_1, v_2 anhand des Basissymbols v
+                base_name = str(key).split('_')[0]
+                for t_key, t_val in self.target_units.items():
+                    if str(t_key) == base_name:
+                        target = t_val
+                        break
+            
+            if target is not None:
+                if isinstance(target, str):
+                    target = ureg.parse_units(target)
+                self.input_werte[key] = val.to(target)
+
     def print_result(self):
-        for key,val in self.werte.items():
-            print("{key}={val:~P}".format(key=str(key),val=val))
+        prec = max(0, self.sigfigs - 1)
+        format_spec = f"~.{prec}e"
+        for key, val in self.input_werte.items():
+            formatted_val = f"{val:{format_spec}}"
+            print(f"{key} = {formatted_val}")
+        print("="*30)
             
     def result(self):
         result = dict()
-        for key,value in self.werte.items():
+        for key, value in self.input_werte.items():
             result[str(key)] = value
         return result
