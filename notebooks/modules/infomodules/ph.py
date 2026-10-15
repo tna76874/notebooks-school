@@ -9,6 +9,7 @@ from sympy.utilities.lambdify import lambdify, implemented_function, lambdastr
 import sympy as sp
 import numpy as np
 import pandas as pd
+import sys
 
 import uncertainties
 from uncertainties import ufloat
@@ -139,9 +140,14 @@ class einsetzen(object):
         self.input_werte = sym_werte
         
     def place_vals_in_funct(self, func, werte):
-        lam = lambdify(tuple(werte.keys()), func)
-        result = lam(*list(werte.values()))
-        # Verhindert wilde Misch-Einheiten durch automatische Reduktion auf Basiseinheiten
+        # FIX: Nutze exakt die freien Symbole des Ausdrucks in der richtigen Reihenfolge, 
+        # um eine Fehlzuordnung durch lambdify zu verhindern.
+        free_syms = list(func.free_symbols)
+        vals = [werte[sym] for sym in free_syms]
+        
+        lam = lambdify(free_syms, func)
+        result = lam(*vals)
+        
         if hasattr(result, 'to_base_units'):
             result = result.to_base_units()
         return result
@@ -153,8 +159,19 @@ class einsetzen(object):
         given_symbols = list(self.func.free_symbols)
 
         current_werte = self.input_werte.copy()
+        
+        bekannte_konstanten = {'g', 'pi', 'c', 'e', 'eps_0', 'm_e', 'mu_0', 'k', 'h'}
 
         for i in list(set(given_symbols).difference(set(symbols))):
+            if str(i) in bekannte_konstanten:
+                caller_globals = sys._getframe(1).f_globals
+                if str(i) in caller_globals:
+                    current_werte[i] = caller_globals[str(i)]
+                    continue
+                elif str(i) in globals():
+                    current_werte[i] = globals()[str(i)]
+                    continue
+
             if set(symbols).issubset((set(given_symbols) | set([i]))):
                 sols = sp.solve(self.func, i)
                 for idx, sol in enumerate(sols):
@@ -172,7 +189,6 @@ class einsetzen(object):
             if key in self.target_units:
                 target = self.target_units[key]
             else:
-                # Erkennt auch indizierte Variablen wie v_1, v_2 anhand des Basissymbols v
                 base_name = str(key).split('_')[0]
                 for t_key, t_val in self.target_units.items():
                     if str(t_key) == base_name:
